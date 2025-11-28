@@ -64,14 +64,37 @@ class MyPortfolio:
 
         # Calculate the portfolio weights
         self.portfolio_weights = pd.DataFrame(
-            index=self.price.index, columns=self.price.columns
+            0.0, index=self.price.index, columns=self.price.columns
         )
 
         """
         TODO: Complete Task 4 Below
         """
+        target_assets = ['XLK', 'XLE', 'XLP', 'XLV']
         
-        
+        for i in range(self.lookback + 1, len(self.returns)):
+            
+            selected_assets = []
+            
+            for asset in target_assets:
+                asset_history = self.price[asset].iloc[i - self.lookback : i]
+                current_price = asset_history.iloc[-1]
+                ma_price = asset_history.mean()
+
+                if current_price > ma_price:
+                    selected_assets.append(asset)
+            
+            if len(selected_assets) > 0:
+                window_returns = self.returns[selected_assets].iloc[i - self.lookback : i]
+                vol = window_returns.std()
+                
+                inv_vol = 1.0 / (vol ** 0.9)
+                inv_vol = inv_vol.replace([np.inf, -np.inf], 0.0)
+                
+                sum_inv_vol = inv_vol.sum()
+                if sum_inv_vol > 0:
+                    weights = inv_vol / sum_inv_vol
+                    self.portfolio_weights.loc[self.returns.index[i], selected_assets] = weights
         """
         TODO: Complete Task 4 Above
         """

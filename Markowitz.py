@@ -62,7 +62,9 @@ class EqualWeightPortfolio:
         """
         TODO: Complete Task 1 Below
         """
-
+        n = len(assets)
+        weight = 1.0 / n
+        self.portfolio_weights.loc[:, assets] = weight
         """
         TODO: Complete Task 1 Above
         """
@@ -113,8 +115,19 @@ class RiskParityPortfolio:
         """
         TODO: Complete Task 2 Below
         """
+        for i in range(self.lookback + 1, len(df)):
+            window_returns = df_returns[assets].iloc[i - self.lookback : i]
 
+            vol = window_returns.std()
 
+            inv_vol = 1.0 / vol
+            inv_vol = inv_vol.replace([np.inf, -np.inf], 0.0)
+            
+            sum_inv_vol = inv_vol.sum()
+
+            if sum_inv_vol > 0:
+                weights = inv_vol / sum_inv_vol
+                self.portfolio_weights.loc[df.index[i], assets] = weights
 
         """
         TODO: Complete Task 2 Above
@@ -122,6 +135,7 @@ class RiskParityPortfolio:
 
         self.portfolio_weights.ffill(inplace=True)
         self.portfolio_weights.fillna(0, inplace=True)
+
 
     def calculate_portfolio_returns(self):
         # Ensure weights are calculated
@@ -187,12 +201,13 @@ class MeanVariancePortfolio:
                 """
                 TODO: Complete Task 3 Below
                 """
-
+                
                 # Sample Code: Initialize Decision w and the Objective
                 # NOTE: You can modify the following code
                 w = model.addMVar(n, name="w", ub=1)
-                model.setObjective(w.sum(), gp.GRB.MAXIMIZE)
-
+                obj = w @ mu - (gamma / 2) * (w @ Sigma @ w)
+                model.setObjective(obj, gp.GRB.MAXIMIZE)
+                model.addConstr(w.sum() == 1, "budget")
                 """
                 TODO: Complete Task 3 Above
                 """
